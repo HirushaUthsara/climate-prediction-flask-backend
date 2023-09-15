@@ -5,6 +5,7 @@ import sqlite3
 import mlflow
 import mlflow.sklearn
 from sklearn.ensemble import RandomForestRegressor
+from datetime import datetime
 
 
 app = Flask(__name__)
@@ -59,12 +60,15 @@ def upload_file():
 
 
 
+
+
 @app.route('/predict', methods=['GET'])
 def predict():
     if 'location' not in request.form or 'time' not in request.form:
         return 'Location or time not found in the request', 400
 
     location = request.form['location']              # get the location 
+    time = datetime.strptime(request.form['time'], '%d-%m-%Y')  # get the time
 
     # Load the latest model for this location from MLflow
     runs = mlflow.search_runs(filter_string=f"tags.mlflow.runName='{location}'")
@@ -76,15 +80,21 @@ def predict():
     
     model = mlflow.sklearn.load_model(model_uri)
 
-    # return "model loaded success"
-
-    # Load the data for this location from the SQLite database
-    data = pd.read_sql_query(f"SELECT * FROM {location}", conn)
+    # Load the data for this location from the uploaded Excel file
+    data = pd.read_csv(f"{location}.csv")
+    
+    # Convert 'date' column to DateTime format
+    data['date'] = pd.to_datetime(data['date'], format='%d-%m-%Y')
+    
+    # Find the nearest next date entry as the relevant entry for prediction
+    data['delta'] = abs(data['date'] - time)
+    nearest_date_row = data.loc[data['delta'].idxmin()]
 
     # Make predictions using the model
-    predictions = model.predict(data.drop('precipitation', axis=1))
+    predictions = model.predict(nearest_date_row.drop('precipitation', axis=1))
 
     return str(predictions)  # Convert numpy array to string
+
 
 if __name__ == '__main__':
     app.run(port=5000,debug=True)
