@@ -1,4 +1,4 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request
 from werkzeug.utils import secure_filename
 import pandas as pd
 import sqlite3
@@ -6,10 +6,12 @@ import mlflow
 import mlflow.sklearn
 from sklearn.ensemble import RandomForestRegressor
 from datetime import datetime
-# import os
+from flask_cors import CORS
 
 
 app = Flask(__name__)
+# Initialize CORS with your Flask app
+CORS(app)
 
 # Database setup
 conn = sqlite3.connect('climate_data.db')
@@ -111,5 +113,4 @@ def predict():
 
 
 if __name__ == '__main__':
-    # port = int(os.environ.get('PORT', 5000))  # default to 5000 if 'PORT' not found
     app.run(port=5000,debug=False)
