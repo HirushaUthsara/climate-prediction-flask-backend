@@ -1,4 +1,4 @@
-from flask import Flask, request
+from flask import Flask, request, jsonify
 from werkzeug.utils import secure_filename
 import pandas as pd
 import sqlite3
@@ -8,9 +8,9 @@ from sklearn.ensemble import RandomForestRegressor
 from datetime import datetime
 from flask_cors import CORS
 
-
+# Initializing flask app
 app = Flask(__name__)
-# Initialize CORS with your Flask app
+# Adding cors to flask
 CORS(app)
 
 # Database setup
@@ -69,11 +69,19 @@ def upload_file():
 
 @app.route('/predict', methods=['GET'])
 def predict():
-    if 'location' not in request.form or 'time' not in request.form:
+    location = request.args.get('location')
+    time = request.args.get('time')
+
+    if not location or not time:
         return 'Location or time not found in the request', 400
 
-    location = request.form['location']              # get the location 
-    time = datetime.strptime(request.form['time'], '%m/%d/%Y')  # get the time
+    # if 'location' not in request.form or 'time' not in request.form:
+    #     return 'Location or time not found in the request', 400
+
+    # location = request.form['location']              # get the location 
+    # time = datetime.strptime(request.form['time'], '%m/%d/%Y')  # get the time
+
+    time = datetime.strptime(time, '%m/%d/%Y') 
 
     # Load the latest model for this location from MLflow
     runs = mlflow.search_runs(filter_string=f"tags.mlflow.runName='{location}'")
@@ -113,4 +121,5 @@ def predict():
 
 
 if __name__ == '__main__':
+    # port = int(os.environ.get('PORT', 5000))  # default to 5000 if 'PORT' not found
     app.run(port=5000,debug=False)
