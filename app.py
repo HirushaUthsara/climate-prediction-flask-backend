@@ -6,6 +6,7 @@ import mlflow
 import mlflow.sklearn
 from sklearn.ensemble import RandomForestRegressor
 from datetime import datetime
+# import os
 
 
 app = Flask(__name__)
@@ -110,4 +111,5 @@ def predict():
 
 
 if __name__ == '__main__':
-    app.run(port=5000,debug=True)
+    # port = int(os.environ.get('PORT', 5000))  # default to 5000 if 'PORT' not found
+    app.run(port=5000,debug=False)
